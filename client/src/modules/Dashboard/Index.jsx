@@ -21,6 +21,7 @@ const Dashboard = () => {
   const [messages, setMessages] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [message, setMessage] = useState('');
+  const [availableUsers, setAvailableUsers] = useState([]);
 
   // Mock data for right sidebar - replace with actual data from your API
   const [conversationLinks, setConversationLinks] = useState([]);
@@ -90,6 +91,23 @@ const Dashboard = () => {
     };
   }, [selectedConversation]);
 
+  // Add useEffect to fetch available users
+  useEffect(() => {
+    const fetchAvailableUsers = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/api/users?userId=${user?.id}`);
+        const data = await response.json();
+        setAvailableUsers(data);
+      } catch (error) {
+        console.error('Error fetching available users:', error);
+      }
+    };
+
+    if (user?.id) {
+      fetchAvailableUsers();
+    }
+  }, [user?.id]);
+
   console.log('user :>> ' , user);
   console.log('conversations :>> ', conversations);
 
@@ -149,14 +167,39 @@ const Dashboard = () => {
   setConversationFiles(files);
 };
 
-  const handleConversationClick = (conversation) => {
-    if (!conversation || !conversation.conversationId) return;
-    setSelectedConversation(conversation);
-    fetchMessages(conversation.conversationId);
-    
-    // Join the conversation room
-    socket.emit('join_room', conversation.conversationId);
-  }
+  const handleConversationClick = async (conversation) => {
+    try {
+      if (!conversation.conversationId) {
+        // This is a new conversation with an available user
+        const response = await fetch('http://localhost:8000/api/conversation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            senderId: user.id,
+            receiverId: conversation.user.userId
+          })
+        });
+        
+        const data = await response.json();
+        if (data.conversationId) {
+          // Update the conversation object with the new conversationId
+          conversation.conversationId = data.conversationId;
+          // Add the new conversation to the list
+          setConversations(prev => [...prev, conversation]);
+        }
+      }
+      
+      setSelectedConversation(conversation);
+      fetchMessages(conversation.conversationId);
+      
+      // Join the conversation room
+      socket.emit('join_room', conversation.conversationId);
+    } catch (error) {
+      console.error('Error handling conversation:', error);
+    }
+  };
 
   const sendMessage = async () => {
     if (!selectedConversation || (!message.trim() && attachedFiles.length === 0)) {
@@ -373,6 +416,34 @@ const Dashboard = () => {
     );
   };
 
+  // Add new function to handle starting a new conversation
+  const handleStartNewChat = async (userData) => {
+    try {
+      const response = await fetch('http://localhost:8000/api/conversation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          senderId: user.id,
+          receiverId: userData.userId
+        })
+      });
+      
+      const data = await response.json();
+      if (data.conversationId) {
+        const newConversation = {
+          user: userData.user,
+          conversationId: data.conversationId
+        };
+        setConversations(prev => [...prev, newConversation]);
+        handleConversationClick(newConversation);
+      }
+    } catch (error) {
+      console.error('Error starting new chat:', error);
+    }
+  };
+
   return (
     <div className="w-screen h-screen flex flex-col lg:flex-row overflow-hidden chat-container bg-gradient-to-br from-[#1a1836] via-[#23214a] to-[#2d295e] text-white">
       <div className="absolute inset-0 bg-[radial-gradient(#a259ff_1px,transparent_1px)] [background-size:16px_16px] opacity-30 pointer-events-none"></div>
@@ -443,6 +514,28 @@ const Dashboard = () => {
           </div>
 
           <hr className="mb-2 border-[#3a336a]" />
+
+          {/* Available Users Section */}
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold mb-4">Available Users</h3>
+            <div className="overflow-y-auto hide-scrollbar" style={{ maxHeight: '160px' }}>
+              {availableUsers.map((userData) => (
+                <div
+                  key={userData.userId}
+                  className="p-4 cursor-pointer transition-colors duration-200 hover:bg-[#2d295e]/60"
+                  onClick={() => handleStartNewChat(userData)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <img src={userImg} alt={userData.user.fullName} className="w-10 h-10 rounded-full" />
+                    <div>
+                      <p className="font-medium">{userData.user.fullName}</p>
+                      <p className="text-sm text-gray-500">{userData.user.email}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Contacts List */}
           <div className="flex-1 overflow-y-auto px-4 hide-scrollbar">

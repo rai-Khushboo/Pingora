@@ -61,7 +61,10 @@ app.post('/api/register', async (req, res) => {
     });
 
     await newUser.save();
-    return res.status(201).json({ message: 'User registered successfully' });
+    return res.status(201).json({ 
+      message: 'Registration successful! Please login to access Pingora.',
+      success: true
+    });
 
   } catch (error) {
     console.error(error);
@@ -155,20 +158,24 @@ app.get('/api/conversations/:userId', async (req, res) => {
 
         if (!receiverId || !mongoose.Types.ObjectId.isValid(receiverId)) {
           // Return a structured object with null user if receiverId is invalid
-          return { user: null, conversationId: conversation._id };
+          return { user: null, conversationId: conversation._id, createdAt: conversation.createdAt };
         }
 
         const user = await Users.findById(receiverId);
 
         if (!user) {
           // Return a structured object with null user if user is not found
-          return { user: null, conversationId: conversation._id };
+          return { user: null, conversationId: conversation._id, createdAt: conversation.createdAt };
         }
 
-        return {user : {
-          email : user.email, 
-          fullName : user.fullName, 
-        } , conversationId : conversation._id}
+        return {
+          user: {
+            email: user.email,
+            fullName: user.fullName,
+          },
+          conversationId: conversation._id,
+          createdAt: conversation.createdAt
+        };
       })
     );
     res.status(200).json(conversationUserData);
@@ -247,17 +254,29 @@ app.get('/api/message/:conversationId' , async (req , res) => {
   }
 })
 
-app.get('/api/users' , async(req , res)=>{
-  try{
-    const users = await Users.find({ });
-    const usersData = Promise.all(users.map(async (user)=>{
-      return { user : { email : user.email , fullName : user.fullName} , userId : user._id}
-    }))
-    res.status(200).json(await usersData);
-  }catch(error){
-    console.log('error' , error)
+app.get('/api/users', async (req, res) => {
+  try {
+    const { userId } = req.query; // Get the current user's ID from query params
+    
+    // Find all users except the current user
+    const users = await Users.find({ _id: { $ne: userId } });
+    
+    const usersData = await Promise.all(users.map(async (user) => {
+      return {
+        user: {
+          email: user.email,
+          fullName: user.fullName
+        },
+        userId: user._id
+      };
+    }));
+    
+    res.status(200).json(usersData);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-})  
+});
 
 app.delete('/api/conversations/:conversationId', async (req, res) => {
   try {

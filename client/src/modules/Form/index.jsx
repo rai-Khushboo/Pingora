@@ -9,26 +9,45 @@ const Form = ({ isSignInPage = true }) => {
     email: '',
     password: '',
   });
+  const [message, setMessage] = useState({ text: '', type: '' });
 
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch(`http://localhost:8000/api/${isSignInPage ? 'login' : 'register'}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch(`http://localhost:8000/api/${isSignInPage ? 'login' : 'register'}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
-    if (res.status === 400) {
-      alert('Invalid credentials');
-    } else {
       const resData = await res.json();
-      if (resData.token) {
-        localStorage.setItem('user:token', resData.token);
-        localStorage.setItem('user:detail', JSON.stringify(resData.user));
-        navigate('/');
+
+      if (res.status === 400) {
+        setMessage({ text: resData.error, type: 'error' });
+      } else if (isSignInPage) {
+        if (resData.token) {
+          localStorage.setItem('user:token', resData.token);
+          localStorage.setItem('user:detail', JSON.stringify(resData.user));
+          navigate('/');
+        }
+      } else {
+        // Registration success
+        setMessage({ text: resData.message, type: 'success' });
+        // Clear form
+        setData({
+          fullName: '',
+          email: '',
+          password: '',
+        });
+        // Redirect to login after 2 seconds
+        setTimeout(() => {
+          navigate('/users/sign_in');
+        }, 2000);
       }
+    } catch (error) {
+      setMessage({ text: 'An error occurred. Please try again.', type: 'error' });
     }
   };
 
@@ -116,6 +135,16 @@ const Form = ({ isSignInPage = true }) => {
                     : 'Start your journey with us today'}
                 </p>
               </div>
+
+              {message.text && (
+                <div className={`mb-6 p-4 rounded-lg ${
+                  message.type === 'success' 
+                    ? 'bg-green-500/20 border border-green-500/50 text-green-300'
+                    : 'bg-red-500/20 border border-red-500/50 text-red-300'
+                }`}>
+                  {message.text}
+                </div>
+              )}
 
               <form className="space-y-6" onSubmit={handleSubmit}>
                 {!isSignInPage && (
