@@ -6,7 +6,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 // Initialize socket connection
-const socket = io('http://localhost:8000', {
+const socket = io('https://pingora-server.onrender.com', {
   withCredentials: true,
   reconnection: true,
   reconnectionAttempts: 5,
@@ -52,7 +52,7 @@ const Dashboard = () => {
     const loggedInUser = JSON.parse(localStorage.getItem('user:detail'));
     const fetchConversations = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/conversations/${loggedInUser?.id}`, {
+        const res = await fetch(`https://pingora-server.onrender.com/api/conversations/${loggedInUser?.id}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchAvailableUsers = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/users?userId=${user?.id}`);
+        const response = await fetch(`https://pingora-server.onrender.com/api/users?userId=${user?.id}`);
         const data = await response.json();
         setAvailableUsers(data);
       } catch (error) {
@@ -115,7 +115,7 @@ const Dashboard = () => {
     if (!conversationId) return;
     
     try {
-      const response = await axios.get(`http://localhost:8000/api/message/${conversationId}`);
+      const response = await axios.get(`https://pingora-server.onrender.com/api/message/${conversationId}`);
       console.log('Raw messages from API:', response.data);
       const formattedMessages = response.data.map(msg => ({
         ...msg,
@@ -171,7 +171,7 @@ const Dashboard = () => {
     try {
       if (!conversation.conversationId) {
         // This is a new conversation with an available user
-        const response = await fetch('http://localhost:8000/api/conversation', {
+        const response = await fetch('https://pingora-server.onrender.com/api/conversation', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -328,7 +328,7 @@ const Dashboard = () => {
   const handleDeleteConversation = async (conversationId) => {
     try {
       const token = localStorage.getItem('user:token');
-      const response = await fetch(`http://localhost:8000/api/conversations/${conversationId}`, {
+      const response = await fetch(`https://pingora-server.onrender.com/api/conversations/${conversationId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -419,7 +419,7 @@ const Dashboard = () => {
   // Add new function to handle starting a new conversation
   const handleStartNewChat = async (userData) => {
     try {
-      const response = await fetch('http://localhost:8000/api/conversation', {
+      const response = await fetch('https://pingora-server.onrender.com/api/conversation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
