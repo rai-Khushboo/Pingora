@@ -33,7 +33,6 @@ const Form = ({ isSignInPage = true }) => {
           navigate('/');
         }
       } else {
-        // Registration success
         setMessage({ text: resData.message, type: 'success' });
         // Clear form
         setData({
@@ -41,7 +40,6 @@ const Form = ({ isSignInPage = true }) => {
           email: '',
           password: '',
         });
-        // Redirect to login after 2 seconds
         setTimeout(() => {
           navigate('/users/sign_in');
         }, 2000);
@@ -53,7 +51,6 @@ const Form = ({ isSignInPage = true }) => {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 px-4 py-8 relative overflow-hidden">
-      {/* Background design */}
       <div className="absolute inset-0 bg-[radial-gradient(rgba(120,119,198,0.2)_1px,transparent_1px)] [background-size:20px_20px] z-0" />
       <div className="absolute inset-0 z-0">
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-gradient-to-r from-blue-400/20 to-purple-600/20 rounded-full blur-3xl" />
@@ -61,9 +58,7 @@ const Form = ({ isSignInPage = true }) => {
         <div className="absolute -bottom-32 left-1/3 w-80 h-80 bg-gradient-to-r from-cyan-400/15 to-blue-600/20 rounded-full blur-3xl" />
       </div>
 
-      {/* Main container */}
       <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col xl:flex-row items-center justify-between gap-8 xl:gap-12">
-        {/* Left content with margin and hover effect on heading */}
         <div className="flex flex-col w-full xl:w-[40%] text-left xl:ml-4">
           <h1 className="text-6xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent mb-4 tracking-tight transition duration-300 hover:scale-105 hover:drop-shadow-[0_0_12px_rgba(100,180,255,0.7)]">
             Pingora
